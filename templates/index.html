@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+
+    <title>Movie Recommendation System</title>
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+
+</head>
+
+<body>
+
+    <h1>Smart Movie Recommendation System</h1>
+
+    <p>Find movies based on your interests</p>
+
+    <form method="POST" onsubmit="showLoader()">
+
+        <input type="text" name="movie" placeholder="Enter movie name">
+
+        <select name="mood">
+
+    <option value="">Select Mood</option>
+
+    <option value="Comedy">Happy</option>
+
+    <option value="Romance">Romantic</option>
+
+    <option value="Drama">Emotional</option>
+
+    <option value="Family">Relaxed</option>
+
+    <option value="Action">Excited</option>
+
+    <option value="Animation">Feel Good</option>
+
+</select>
+
+        <button type="submit">Recommend</button>
+
+    </form>
+    <div id="loader" style="display:none;">
+
+    <div class="spinner"></div>
+
+    <p>Loading recommendations...</p>
+
+</div>
+    {% if error %}
+
+<div class="error-message">
+    {{ error }}
+</div>
+
+{% endif %}
+
+    <div class="movie-container">
+
+        {% for movie in recommendations %}
+
+        <div class="movie-card">
+
+            <img src="{{ movie.poster }}" alt="Poster">
+
+            <h2>{{ movie.title }}</h2>
+
+            <p>⭐ IMDb: {{ movie.rating }}</p>
+
+        </div>
+
+        {% endfor %}
+
+    </div>
+    <footer>
+
+    Built using Flask, Python, Machine Learning & OMDb API
+
+    </footer>
+<script>
+
+function showLoader() {
+
+    document.getElementById("loader").style.display = "block";
+
+}
+
+</script>
+</body>
+
+</html>
