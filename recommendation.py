@@ -40,6 +40,7 @@ def fetch_movie_details(movie_title):
 
 
 movies = pd.read_csv('movies.csv')
+movies = movies.head(2000)
 
 movies = movies[
     ['title', 'overview', 'genres']
