@@ -1,14 +1,14 @@
 import pandas as pd
 import requests
 import nltk
-
+import os
 from nltk.stem.porter import PorterStemmer
 
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 
 
-API_KEY = "73f2c58b"
+API_KEY = os.environ.get("73f2c58b")
 
 ps = PorterStemmer()
 
