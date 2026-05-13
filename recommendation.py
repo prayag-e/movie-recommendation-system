@@ -2,15 +2,31 @@ import pandas as pd
 import requests
 import nltk
 import os
+import ast
 from nltk.stem.porter import PorterStemmer
 
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 
 
-API_KEY = os.environ.get("73f2c58b")
+API_KEY = "73f2c58b"
 
 ps = PorterStemmer()
+def convert(obj):
+
+    genres = []
+
+    try:
+
+        for item in ast.literal_eval(obj):
+
+            genres.append(item['name'])
+
+    except:
+
+        pass
+
+    return ", ".join(genres)
 
 
 def stem(text):
@@ -32,10 +48,16 @@ def fetch_movie_details(movie_title):
 
     data = response.json()
 
+    poster = data.get("Poster")
+
+    if poster == "N/A" or not poster:
+
+        poster = "https://via.placeholder.com/300x450?text=No+Image"
+
     return {
-        "title": data.get("Title"),
-        "poster": data.get("Poster"),
-        "rating": data.get("imdbRating")
+        "title": data.get("Title", movie_title),
+        "poster": poster,
+        "rating": data.get("imdbRating", "N/A")
     }
 
 
@@ -47,7 +69,7 @@ movies = movies[
 ]
 
 movies.dropna(inplace=True)
-
+movies['genres'] = movies['genres'].apply(convert)
 movies['tags'] = (
     movies['overview'].astype(str) + ' ' +
     movies['genres'].astype(str)
@@ -96,8 +118,23 @@ def recommend(movie_name):
     for movie in movies_list:
 
         movie_title = movies.iloc[movie[0]]['title']
+        movie_genres = movies.iloc[movie[0]]['genres']
 
         movie_data = fetch_movie_details(movie_title)
+        movie_data["explanation"] = (
+           f"Recommended because it shares "
+           f"{movie_genres} themes."
+        )
+
+        movie_genres = (
+    movies.iloc[movie[0]]['genres']
+    .replace('|', ', ')
+)
+
+        movie_data["explanation"] = (
+        f"Recommended because it shares "
+        f"{movie_genres} themes."
+)
 
         recommendations.append(movie_data)
 
@@ -120,6 +157,16 @@ def recommend_by_mood(mood):
 
         movie_data = fetch_movie_details(movie)
 
-        recommendations.append(movie_data)
+    movie_genres = (
+       movies.iloc[movie[0]]['genres']
+       .replace('|', ', ')
+)
+
+    movie_data["explanation"] = (
+       f"Recommended because it shares "
+       f"{movie_genres} themes."
+)
+
+    recommendations.append(movie_data)
 
     return recommendations

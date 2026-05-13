@@ -4,6 +4,11 @@
 <head>
 
     <title>Movie Recommendation System</title>
+    <button id="theme-toggle">
+
+    🌙 Toggle Theme
+
+</button>
 
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 
@@ -17,7 +22,21 @@
 
     <form method="POST" onsubmit="showLoader()">
 
-        <input type="text" name="movie" placeholder="Enter movie name">
+        <div class="search-box">
+
+    <input
+        type="text"
+        id="movieInput"
+        name="movie"
+        placeholder="Search movies like Inception, Batman..."
+        autocomplete="off"
+        
+    >
+ 
+
+    <div id="suggestions"></div>
+
+</div>
 
         <select name="mood">
 
@@ -54,7 +73,60 @@
 </div>
 
 {% endif %}
+    {% if not recommendations %}
 
+<h2 class="trending-title">
+
+    🔥 Trending Movies
+
+</h2>
+
+<div class="movie-container">
+
+    {% for movie in default_movies %}
+
+    <div class="movie-card">
+
+        <img src="{{ movie.poster }}" alt="Poster">
+
+        <h2>{{ movie.title }}</h2>
+
+        <p class="rating
+{% if movie.rating != 'N/A' %}
+    {% if movie.rating|float >= 8 %}
+        rating-high
+    {% elif movie.rating|float >= 6 %}
+        rating-medium
+    {% else %}
+        rating-low
+    {% endif %}
+{% endif %}
+">
+
+⭐ IMDb: {{ movie.rating }}
+
+</p>
+        <p class="explanation">
+
+    {{ movie.explanation }}
+
+</p>
+
+        <a
+            href="https://www.youtube.com/results?search_query={{ movie.title }}+official+trailer"
+            target="_blank"
+            class="trailer-btn"
+        >
+            ▶ Watch Trailer
+        </a>
+
+    </div>
+
+    {% endfor %}
+
+</div>
+
+{% endif %}
     <div class="movie-container">
 
         {% for movie in recommendations %}
@@ -65,14 +137,58 @@
 
             <h2>{{ movie.title }}</h2>
 
-            <p>⭐ IMDb: {{ movie.rating }}</p>
+            <p class="rating
+{% if movie.rating != 'N/A' %}
+    {% if movie.rating|float >= 8 %}
+        rating-high
+    {% elif movie.rating|float >= 6 %}
+        rating-medium
+    {% else %}
+        rating-low
+    {% endif %}
+{% endif %}
+">
 
+⭐ IMDb: {{ movie.rating }}
+
+</p>
+            <p class="explanation">
+
+    {{ movie.explanation }}
+
+</p>
+<a
+    href="https://www.youtube.com/results?search_query={{ movie.title }}+official+trailer"
+    target="_blank"
+    class="trailer-btn"
+>
+
+    ▶ Watch Trailer
+
+</a>
+<button
+    class="favorite-btn"
+    onclick="addToFavorites('{{ movie.title }}')"
+>
+
+    ❤️ Add to Favorites
+
+</button>
         </div>
 
         {% endfor %}
 
     </div>
-    <footer>
+   <h2 class="favorites-title">
+
+    ❤️ Favorite Movies
+
+</h2>
+
+<div id="favorites-container" class="movie-container">
+
+</div>
+ <footer>
 
     Built using Flask, Python, Machine Learning & OMDb API
 
@@ -85,7 +201,126 @@ function showLoader() {
 
 }
 
+const movieInput = document.getElementById("movieInput");
+
+const suggestionsBox = document.getElementById("suggestions");
+
+movieInput.addEventListener("input", async () => {
+
+    const query = movieInput.value;
+
+    if (query.length < 2) {
+
+        suggestionsBox.innerHTML = "";
+
+        return;
+    }
+
+    const response = await fetch(`/suggest?q=${query}`);
+
+    const suggestions = await response.json();
+
+    suggestionsBox.innerHTML = "";
+
+    suggestions.forEach(movie => {
+
+        const div = document.createElement("div");
+
+        div.classList.add("suggestion-item");
+
+        div.innerText = movie;
+
+        div.onclick = () => {
+
+            movieInput.value = movie;
+
+            suggestionsBox.innerHTML = "";
+
+        };
+
+        suggestionsBox.appendChild(div);
+
+    });
+
+});
+
+function addToFavorites(movieTitle) {
+
+    let favorites =
+        JSON.parse(localStorage.getItem("favorites")) || [];
+
+    if (!favorites.includes(movieTitle)) {
+
+        favorites.push(movieTitle);
+
+        localStorage.setItem(
+            "favorites",
+            JSON.stringify(favorites)
+        );
+
+
+themeToggle.addEventListener("click", () => {
+
+    document.body.classList.toggle("light-mode");
+
+    if (
+        document.body.classList.contains("light-mode")
+    ) {
+
+        localStorage.setItem("theme", "light");
+
+    } else {
+
+        localStorage.setItem("theme", "dark");
+
+    }
+
+});
+
+if (localStorage.getItem("theme") === "light") {
+
+    document.body.classList.add("light-mode");
+
+}
+        displayFavorites();
+    }
+}
+
+function displayFavorites() {
+
+    const container =
+        document.getElementById("favorites-container");
+
+    container.innerHTML = "";
+
+    let favorites =
+        JSON.parse(localStorage.getItem("favorites")) || [];
+
+    favorites.forEach(movie => {
+
+        const div = document.createElement("div");
+
+        div.classList.add("movie-card");
+
+        div.innerHTML = `
+            <h2>${movie}</h2>
+        `;
+
+        container.appendChild(div);
+
+    });
+}
+
+displayFavorites();
+document
+    .getElementById("theme-toggle")
+    .onclick = function () {
+
+    document.body.classList.toggle("light-mode");
+
+};
+
 </script>
 </body>
 
-</html>
+</html> 
