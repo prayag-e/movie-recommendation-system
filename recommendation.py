@@ -3,14 +3,17 @@ import requests
 import nltk
 import os
 import ast
-from nltk.stem.porter import PorterStemmer
+import urllib3
 
+urllib3.disable_warnings()
+from nltk.stem.porter import PorterStemmer
+from urllib.parse import quote
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 
 
-API_KEY = "73f2c58b"
-
+TMDB_API_KEY = "77adb6aedb53d68ab4b08ff7cfbfd715"
+movie_cache = {}
 ps = PorterStemmer()
 def convert(obj):
 
@@ -41,25 +44,141 @@ def stem(text):
 
 
 def fetch_movie_details(movie_title):
+    if movie_title in movie_cache:
+        return movie_cache[movie_title]
+    search_url = (
+        f"https://api.themoviedb.org/3/search/movie"
+        f"?api_key={TMDB_API_KEY}"
+        f"&query={quote(movie_title)}"
+    )
+    
 
-    url = f"http://www.omdbapi.com/?t={movie_title}&apikey={API_KEY}"
+    headers = {
+    "User-Agent": "Mozilla/5.0"
+}
 
-    response = requests.get(url)
+    response = requests.get(
+        search_url,
+        headers=headers,
+        timeout=10
+)
 
     data = response.json()
 
-    poster = data.get("Poster")
+    results = data.get("results")
 
-    if poster == "N/A" or not poster:
+    if not results:
 
-        poster = "https://via.placeholder.com/300x450?text=No+Image"
+        return {
+            "title": movie_title,
+            "poster": "https://via.placeholder.com/300x450?text=No+Image",
+            "rating": "N/A",
+            "genres": [],
+            "explanation": "No description available."
+        }
 
-    return {
-        "title": data.get("Title", movie_title),
-        "poster": poster,
-        "rating": data.get("imdbRating", "N/A")
+    movie = results[0]
+
+    poster_path = movie.get("poster_path")
+
+    if poster_path:
+
+        poster = (
+            "https://image.tmdb.org/t/p/w500"
+            + poster_path
+        )
+
+    else:
+
+        poster = (
+            "https://via.placeholder.com/300x450?text=No+Image"
+        )
+
+    rating = movie.get("vote_average", "N/A")
+
+    genre_ids = movie.get("genre_ids", [])
+
+    genre_map = {
+
+        28: "Action",
+        12: "Adventure",
+        16: "Animation",
+        35: "Comedy",
+        80: "Crime",
+        18: "Drama",
+        14: "Fantasy",
+        27: "Horror",
+        9648: "Mystery",
+        10749: "Romance",
+        878: "Science Fiction",
+        53: "Thriller"
+
     }
 
+    genres = [
+        genre_map.get(gid)
+        for gid in genre_ids
+        if genre_map.get(gid)
+    ]
+
+    explanation = (
+        "Recommended because it shares "
+        + ", ".join(genres[:4])
+        + " themes."
+    )
+
+    movie_cache[movie_title] = {
+
+        "title": movie.get("title", movie_title),
+
+        "poster": poster,
+
+        "rating": round(rating, 1)
+        if isinstance(rating, (int, float))
+        else "N/A",
+
+        "genres": genres,
+
+        "explanation": explanation
+
+    }
+
+    return movie_cache[movie_title]
+
+def get_trending_movies():
+
+    trending_url = (
+        f"https://api.themoviedb.org/3/trending/movie/day"
+        f"?api_key={TMDB_API_KEY}"
+    )
+
+    headers = {
+        "User-Agent": "Mozilla/5.0"
+    }
+
+    response = requests.get(
+        trending_url,
+        headers=headers,
+        timeout=10
+    )
+
+    data = response.json()
+
+    results = data.get("results", [])
+
+    trending_movies = []
+
+    for movie in results[:5]:
+
+        movie_title = movie.get("title")
+
+        if movie_title:
+
+            movie_data =fetch_movie_details(movie_title)
+
+            trending_movies.append(movie_data)
+
+    return trending_movies
 
 movies = pd.read_csv('movies.csv')
 movies = movies.head(2000)
@@ -84,7 +203,7 @@ vectorizer = TfidfVectorizer(
     stop_words='english'
 )
 
-vectors = vectorizer.fit_transform(movies['tags']).toarray()
+vectors = vectorizer.fit_transform(movies['tags'])
 
 similarity = cosine_similarity(vectors)
 
@@ -154,25 +273,22 @@ def recommend_by_mood(mood):
 
     recommendations = []
 
-    for movie in mood_movies['title'].head(5):
+    for movie in mood_movies['title'].head(8):
 
         movie_data = fetch_movie_details(movie)
-        movie_data["genres"] = (
-    movies[movies['title'] == movie]['genres']
-    .values[0]
-    .split(", ")
-)
 
-    movie_genres = (
-       movies.iloc[movie[0]]['genres']
-       .replace('|', ', ')
-)
+        movie_genres = (
+            movies[movies['title'] == movie]['genres']
+            .values[0]
+        )
 
-    movie_data["explanation"] = (
-       f"Recommended because it shares "
-       f"{movie_genres} themes."
-)
+        movie_data["genres"] = movie_genres.split(", ")
 
-    recommendations.append(movie_data)
+        movie_data["explanation"] = (
+            f"Recommended because it shares "
+            f"{movie_genres} themes."
+        )
+
+        recommendations.append(movie_data)
 
     return recommendations

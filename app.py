@@ -1,29 +1,18 @@
 from flask import Flask, render_template, request
-from recommendation import recommend, recommend_by_mood
+from recommendation import (
+    recommend,
+    recommend_by_mood,
+    get_trending_movies
+)
 from flask import jsonify
 app = Flask(__name__)
 
 @app.route('/', methods=['GET', 'POST'])
 def home():
 
-    trending_movies = [
-    "Inception",
-    "Interstellar",
-    "The Dark Knight",
-    "Avengers: Endgame",
-    "Titanic"]
-
     recommendations = []
 
-    default_movies = []
-
-    for movie in trending_movies:
-
-        movie_data = recommend(movie)
-
-        if movie_data:
-
-            default_movies.append(movie_data[0])
+    default_movies = get_trending_movies()
 
     error = None
 

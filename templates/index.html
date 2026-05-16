@@ -65,6 +65,10 @@
 </a>
 
     </form>
+    <div id="search-history">
+
+</div>
+
     <div id="loader" style="display:none;">
 
     <div class="spinner"></div>
@@ -258,7 +262,7 @@
 
  <footer>
 
-    Built using Flask, Python, Machine Learning & OMDb API
+    Built using Flask, Python, Machine Learning & TMDB API
 
     </footer>
 <script>
@@ -446,7 +450,68 @@ document
     document.body.classList.toggle("light-mode");
 
 };
+const historyContainer =
+    document.getElementById("search-history");
 
+function loadSearchHistory() {
+
+    let searches =
+        JSON.parse(
+            localStorage.getItem("searchHistory")
+        ) || [];
+
+    historyContainer.innerHTML = "";
+
+    searches.forEach(movie => {
+
+        const item =
+            document.createElement("div");
+
+        item.classList.add("history-item");
+
+        item.innerText = movie;
+
+        item.onclick = () => {
+
+            movieInput.value = movie;
+
+        };
+
+        historyContainer.appendChild(item);
+
+    });
+
+}
+
+document.querySelector("form")
+.addEventListener("submit", () => {
+
+    const movie =
+        movieInput.value.trim();
+
+    if (!movie) return;
+
+    let searches =
+        JSON.parse(
+            localStorage.getItem("searchHistory")
+        ) || [];
+
+    searches = searches.filter(
+        item => item !== movie
+    );
+
+    searches.unshift(movie);
+
+    searches = searches.slice(0, 5);
+
+    localStorage.setItem(
+        "searchHistory",
+        JSON.stringify(searches)
+    );
+
+});
+
+loadSearchHistory();
 </script>
 <div id="toast">
 
