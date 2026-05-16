@@ -121,6 +121,7 @@ def recommend(movie_name):
         movie_genres = movies.iloc[movie[0]]['genres']
 
         movie_data = fetch_movie_details(movie_title)
+        movie_data["genres"] = movie_genres.split(", ")
         movie_data["explanation"] = (
            f"Recommended because it shares "
            f"{movie_genres} themes."
@@ -156,6 +157,11 @@ def recommend_by_mood(mood):
     for movie in mood_movies['title'].head(5):
 
         movie_data = fetch_movie_details(movie)
+        movie_data["genres"] = (
+    movies[movies['title'] == movie]['genres']
+    .values[0]
+    .split(", ")
+)
 
     movie_genres = (
        movies.iloc[movie[0]]['genres']

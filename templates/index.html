@@ -4,17 +4,18 @@
 <head>
 
     <title>Movie Recommendation System</title>
-    <button id="theme-toggle">
-
-    🌙 Toggle Theme
-
-</button>
+    
 
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 
 </head>
 
 <body>
+    <button id="theme-toggle">
+
+    🌙 Toggle Theme
+
+</button>
 
     <h1>Smart Movie Recommendation System</h1>
 
@@ -57,6 +58,11 @@
 </select>
 
         <button type="submit">Recommend</button>
+        <a href="/" class="home-btn">
+
+    🏠 Home
+
+</a>
 
     </form>
     <div id="loader" style="display:none;">
@@ -87,7 +93,11 @@
 
     <div class="movie-card">
 
-        <img src="{{ movie.poster }}" alt="Poster">
+        <img
+    src="{{ movie.poster }}"
+    alt="Poster"
+    onerror="this.onerror=null; this.src='https://placehold.co/300x450?text=No+Image';"
+>
 
         <h2>{{ movie.title }}</h2>
 
@@ -106,7 +116,22 @@
 ⭐ IMDb: {{ movie.rating }}
 
 </p>
-        <p class="explanation">
+        <div class="genre-container">
+
+    {% for genre in movie.genres %}
+
+        <span class="genre-badge">
+
+            {{ genre }}
+
+        </span>
+
+    {% endfor %}
+
+</div>
+
+<p class="explanation">
+    
 
     {{ movie.explanation }}
 
@@ -119,6 +144,18 @@
         >
             ▶ Watch Trailer
         </a>
+        <button
+    class="favorite-btn"
+    onclick="addToFavorites(
+        '{{ movie.title }}',
+        '{{ movie.poster }}',
+        '{{ movie.rating }}'
+    )"
+>
+
+    ❤️ Add to Favorites
+
+</button>
 
     </div>
 
@@ -133,7 +170,11 @@
 
         <div class="movie-card">
 
-            <img src="{{ movie.poster }}" alt="Poster">
+            <img
+    src="{{ movie.poster }}"
+    alt="Poster"
+    onerror="this.onerror=null; this.src='https://placehold.co/300x450?text=No+Image';"
+>
 
             <h2>{{ movie.title }}</h2>
 
@@ -152,7 +193,22 @@
 ⭐ IMDb: {{ movie.rating }}
 
 </p>
-            <p class="explanation">
+           <div class="genre-container">
+
+    {% for genre in movie.genres %}
+
+        <span class="genre-badge">
+
+            {{ genre }}
+
+        </span>
+
+    {% endfor %}
+
+</div>
+
+<p class="explanation">
+    
 
     {{ movie.explanation }}
 
@@ -166,28 +222,40 @@
     ▶ Watch Trailer
 
 </a>
+
 <button
     class="favorite-btn"
-    onclick="addToFavorites('{{ movie.title }}')"
+    onclick="addToFavorites(
+        '{{ movie.title }}',
+        '{{ movie.poster }}',
+        '{{ movie.rating }}'
+    )"
 >
 
     ❤️ Add to Favorites
 
 </button>
+
         </div>
 
         {% endfor %}
 
     </div>
-   <h2 class="favorites-title">
+  
+<h2 class="favorites-title">
 
     ❤️ Favorite Movies
 
 </h2>
 
-<div id="favorites-container" class="movie-container">
+<div
+    id="favorites-container"
+    class="movie-container"
+>
 
 </div>
+
+
  <footer>
 
     Built using Flask, Python, Machine Learning & OMDb API
@@ -201,9 +269,11 @@ function showLoader() {
 
 }
 
-const movieInput = document.getElementById("movieInput");
+const movieInput =
+    document.getElementById("movieInput");
 
-const suggestionsBox = document.getElementById("suggestions");
+const suggestionsBox =
+    document.getElementById("suggestions");
 
 movieInput.addEventListener("input", async () => {
 
@@ -214,17 +284,21 @@ movieInput.addEventListener("input", async () => {
         suggestionsBox.innerHTML = "";
 
         return;
+
     }
 
-    const response = await fetch(`/suggest?q=${query}`);
+    const response =
+        await fetch(`/suggest?q=${query}`);
 
-    const suggestions = await response.json();
+    const suggestions =
+        await response.json();
 
     suggestionsBox.innerHTML = "";
 
     suggestions.forEach(movie => {
 
-        const div = document.createElement("div");
+        const div =
+            document.createElement("div");
 
         div.classList.add("suggestion-item");
 
@@ -244,47 +318,57 @@ movieInput.addEventListener("input", async () => {
 
 });
 
-function addToFavorites(movieTitle) {
+
+function showToast(message) {
+
+    const toast =
+        document.getElementById("toast");
+
+    toast.innerText = message;
+
+    toast.classList.add("show");
+
+    setTimeout(() => {
+
+        toast.classList.remove("show");
+
+    }, 2000);
+
+}
+
+
+function addToFavorites(title, poster, rating) {
 
     let favorites =
-        JSON.parse(localStorage.getItem("favorites")) || [];
+        JSON.parse(localStorage.getItem("favorites"))
+        || [];
 
-    if (!favorites.includes(movieTitle)) {
+    const exists =
+        favorites.some(movie => movie.title === title);
 
-        favorites.push(movieTitle);
+    if (!exists) {
+
+        favorites.push({
+
+            title,
+            poster,
+            rating
+
+        });
 
         localStorage.setItem(
             "favorites",
             JSON.stringify(favorites)
         );
 
-
-themeToggle.addEventListener("click", () => {
-
-    document.body.classList.toggle("light-mode");
-
-    if (
-        document.body.classList.contains("light-mode")
-    ) {
-
-        localStorage.setItem("theme", "light");
-
-    } else {
-
-        localStorage.setItem("theme", "dark");
-
-    }
-
-});
-
-if (localStorage.getItem("theme") === "light") {
-
-    document.body.classList.add("light-mode");
-
-}
         displayFavorites();
+
+        showToast("Added to Favorites ❤️");
+
     }
+
 }
+
 
 function displayFavorites() {
 
@@ -294,24 +378,67 @@ function displayFavorites() {
     container.innerHTML = "";
 
     let favorites =
-        JSON.parse(localStorage.getItem("favorites")) || [];
+        JSON.parse(localStorage.getItem("favorites"))
+        || [];
 
     favorites.forEach(movie => {
 
-        const div = document.createElement("div");
+        const div =
+            document.createElement("div");
 
         div.classList.add("movie-card");
 
         div.innerHTML = `
-            <h2>${movie}</h2>
-        `;
+
+    <img src="${movie.poster}" alt="Poster">
+
+    <h2>${movie.title}</h2>
+
+    <p class="rating">
+
+        ⭐ IMDb: ${movie.rating}
+
+    </p>
+
+    <button
+        class="remove-btn"
+        onclick='removeFavorite(${JSON.stringify(movie.title)})'
+    >
+
+        ❌ Remove
+
+    </button>
+
+`;
 
         container.appendChild(div);
 
     });
-}
 
+}
+function removeFavorite(title) {
+
+    let favorites =
+        JSON.parse(localStorage.getItem("favorites"))
+        || [];
+
+    favorites = favorites.filter(
+        movie => movie.title !== title
+    );
+
+    localStorage.setItem(
+        "favorites",
+        JSON.stringify(favorites)
+    );
+
+    showToast("Removed from Favorites ❌");
+
+    displayFavorites();
+
+}
 displayFavorites();
+
+
 document
     .getElementById("theme-toggle")
     .onclick = function () {
@@ -321,6 +448,11 @@ document
 };
 
 </script>
+<div id="toast">
+
+    Added to Favorites ❤️
+
+</div>
 </body>
 
 </html> 
