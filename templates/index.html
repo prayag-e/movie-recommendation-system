@@ -69,11 +69,15 @@
 
 </div>
 
-    <div id="loader" style="display:none;">
+    <div id="loader" class="skeleton-container">
 
-    <div class="spinner"></div>
+    <div class="skeleton-card"></div>
 
-    <p>Loading recommendations...</p>
+    <div class="skeleton-card"></div>
+
+    <div class="skeleton-card"></div>
+
+    <div class="skeleton-card"></div>
 
 </div>
     {% if error %}
@@ -95,7 +99,14 @@
 
     {% for movie in default_movies %}
 
-    <div class="movie-card">
+    <div
+    class="movie-card"
+    data-title="{{ movie.title }}"
+    data-poster="{{ movie.poster }}"
+    data-rating="{{ movie.rating }}"
+    data-genres="{{ movie.genres | join(', ') }}"
+    data-explanation="{{ movie.explanation }}"
+>
 
         <img
     src="{{ movie.poster }}"
@@ -172,7 +183,14 @@
 
         {% for movie in recommendations %}
 
-        <div class="movie-card">
+        <div
+    class="movie-card"
+    data-title="{{ movie.title }}"
+    data-poster="{{ movie.poster }}"
+    data-rating="{{ movie.rating }}"
+    data-genres="{{ movie.genres | join(', ') }}"
+    data-explanation="{{ movie.explanation }}"
+>
 
             <img
     src="{{ movie.poster }}"
@@ -251,6 +269,14 @@
     ❤️ Favorite Movies
 
 </h2>
+<button
+    class="clear-favorites-btn"
+    onclick="clearFavorites()"
+>
+
+    🗑 Clear All Favorites
+
+</button>
 
 <div
     id="favorites-container"
@@ -265,11 +291,31 @@
     Built using Flask, Python, Machine Learning & TMDB API
 
     </footer>
+<div id="movie-modal" class="modal">
+
+    <div class="modal-content">
+
+        <span class="close-modal">&times;</span>
+
+        <img id="modal-poster" src="">
+
+        <h2 id="modal-title"></h2>
+
+        <p id="modal-rating"></p>
+
+        <p id="modal-genres"></p>
+
+        <p id="modal-explanation"></p>
+
+    </div>
+
+</div>
 <script>
 
 function showLoader() {
 
-    document.getElementById("loader").style.display = "block";
+    document.getElementById("loader")
+    .style.display = "flex";
 
 }
 
@@ -440,6 +486,15 @@ function removeFavorite(title) {
     displayFavorites();
 
 }
+function clearFavorites() {
+
+    localStorage.removeItem("favorites");
+
+    displayFavorites();
+
+    showToast("Favorites Cleared 🗑");
+
+}
 displayFavorites();
 
 
@@ -512,12 +567,83 @@ document.querySelector("form")
 });
 
 loadSearchHistory();
+const modal =
+    document.getElementById("movie-modal");
+
+const modalPoster =
+    document.getElementById("modal-poster");
+
+const modalTitle =
+    document.getElementById("modal-title");
+
+const modalRating =
+    document.getElementById("modal-rating");
+
+const modalGenres =
+    document.getElementById("modal-genres");
+
+const modalExplanation =
+    document.getElementById("modal-explanation");
+
+const closeModal =
+    document.querySelector(".close-modal");
+
+document
+    .querySelectorAll(".movie-card")
+    .forEach(card => {
+
+    card.addEventListener("click", (e) => {
+
+        if (
+            e.target.tagName === "A" ||
+            e.target.tagName === "BUTTON"
+        ) {
+            return;
+        }
+
+        modalPoster.src =
+            card.dataset.poster;
+
+        modalTitle.innerText =
+            card.dataset.title;
+
+        modalRating.innerText =
+            "⭐ IMDb: " + card.dataset.rating;
+
+        modalGenres.innerText =
+            "🎭 " + card.dataset.genres;
+
+        modalExplanation.innerText =
+            card.dataset.explanation;
+
+        modal.style.display = "flex";
+
+    });
+
+});
+
+closeModal.onclick = () => {
+
+    modal.style.display = "none";
+
+};
+
+window.onclick = (e) => {
+
+    if (e.target === modal) {
+
+        modal.style.display = "none";
+
+    }
+
+};
 </script>
 <div id="toast">
 
     Added to Favorites ❤️
 
 </div>
+
 </body>
 
 </html> 
